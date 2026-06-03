@@ -19,7 +19,8 @@ from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from core.ingest import FFmpegNotFoundError, download_audio, list_tracks, resolve_deno_path
+from core.ingest import FFmpegNotFoundError, download_audio, list_tracks, resolve_deno_path, update_track
+from core.metadata import MetadataError
 from core.paths import DEFAULT_LIBRARY
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
@@ -63,6 +64,14 @@ class JobResponse(BaseModel):
     status: JobStatus
     message: str
     titles: list[str]
+
+
+class TrackUpdateRequest(BaseModel):
+    path: str = Field(min_length=1)
+    new_filename: str = Field(min_length=1)
+    title: str = Field(min_length=1)
+    artist: str = ""
+    album: str = ""
 
 
 def _set_job_message(job_id: str, message: str) -> None:
@@ -141,6 +150,25 @@ def health() -> dict:
 @app.get("/api/tracks")
 def tracks() -> dict:
     return {"tracks": list_tracks(DEFAULT_LIBRARY)}
+
+
+@app.patch("/api/tracks")
+def patch_track(body: TrackUpdateRequest) -> dict:
+    try:
+        track = update_track(
+            body.path.strip(),
+            new_stem=body.new_filename.strip(),
+            title=body.title.strip(),
+            artist=body.artist.strip(),
+            album=body.album.strip(),
+            library_dir=DEFAULT_LIBRARY,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except MetadataError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"track": track}
 
 
 @app.post("/api/download", response_model=DownloadResponse)

@@ -73,6 +73,7 @@ label {
 }
 
 input[type="url"],
+input[type="text"],
 select {
   width: 100%;
   padding: 0.65rem 0.75rem;
@@ -163,26 +164,70 @@ button.secondary {
   padding: 0;
 }
 
-.track-list li {
+.track-list li.track-item {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   gap: 1rem;
   padding: 0.65rem 0;
   border-bottom: 1px solid var(--border);
 }
 
-.track-list li:last-child {
+.track-list li.track-section {
+  padding: 0.85rem 0 0.35rem;
   border-bottom: none;
-}
-
-.track-name {
-  font-weight: 500;
-}
-
-.track-meta {
+  font-size: 0.8rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
   color: var(--muted);
-  font-size: 0.85rem;
-  white-space: nowrap;
+  text-transform: uppercase;
+}
+
+.track-list li.track-section:not(:first-child) {
+  margin-top: 0.5rem;
+  padding-top: 1.25rem;
+  border-top: 1px solid var(--border);
+}
+
+.track-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.track-meta-line {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 0.2rem;
+  font-size: 0.9rem;
+}
+
+.track-meta-label {
+  flex-shrink: 0;
+  width: 5.5rem;
+  color: var(--muted);
+  font-size: 0.8rem;
+}
+
+.track-meta-value {
+  font-weight: 500;
+  word-break: break-word;
+}
+
+.track-meta-empty {
+  color: var(--muted);
+  font-style: italic;
+}
+
+.track-filename {
+  display: block;
+  margin-top: 0.35rem;
+  color: var(--muted);
+  font-size: 0.75rem;
+  word-break: break-all;
+}
+
+.track-edit-btn {
+  flex-shrink: 0;
 }
 
 .status {
@@ -232,4 +277,49 @@ button.secondary {
   margin: 1rem 0 0;
   color: var(--muted);
   text-align: center;
+}
+
+.track-list li.track-item:last-child {
+  border-bottom: none;
+}
+
+.edit-dialog {
+  width: min(420px, calc(100vw - 2rem));
+  padding: 0;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  color: var(--text);
+}
+
+.edit-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.45);
+}
+
+.edit-dialog form {
+  padding: 1.25rem;
+}
+
+.edit-dialog h2 {
+  margin: 0 0 1rem;
+  font-size: 1.1rem;
+}
+
+.edit-dialog label {
+  margin-top: 0.75rem;
+}
+
+.edit-dialog label:first-of-type {
+  margin-top: 0;
+}
+
+.dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.5rem;
+  margin-top: 1.25rem;
+}
+
+.dialog-actions button {
+  margin-top: 0;
 }

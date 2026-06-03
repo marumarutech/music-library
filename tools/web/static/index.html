@@ -73,6 +73,30 @@
     </section>
   </main>
 
+  <dialog id="edit-dialog" class="edit-dialog">
+    <form id="edit-form" method="dialog">
+      <h2>曲を編集</h2>
+      <input id="edit-original-path" type="hidden" />
+
+      <label for="edit-filename">ファイル名（拡張子なし）</label>
+      <input id="edit-filename" type="text" required autocomplete="off" />
+
+      <label for="edit-title">曲名</label>
+      <input id="edit-title" type="text" required autocomplete="off" />
+
+      <label for="edit-artist">アーティスト</label>
+      <input id="edit-artist" type="text" autocomplete="off" />
+
+      <label for="edit-album">アルバム</label>
+      <input id="edit-album" type="text" autocomplete="off" />
+
+      <div class="dialog-actions">
+        <button type="button" id="edit-cancel-btn" class="secondary">キャンセル</button>
+        <button type="submit" id="edit-save-btn">保存</button>
+      </div>
+    </form>
+  </dialog>
+
   <script src="/static/app.js"></script>
 </body>
 </html>

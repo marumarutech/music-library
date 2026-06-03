@@ -8,7 +8,8 @@ from pathlib import Path
 import yt_dlp
 
 from core.audio import normalize_loudness, trim_silence_edges
-from core.paths import DEFAULT_LIBRARY
+from core.metadata import MetadataError, read_tags, resolve_library_mp3, validate_filename_stem, write_tags
+from core.paths import DEFAULT_LIBRARY, SYNCED_FOLDER
 
 
 class FFmpegNotFoundError(RuntimeError):
@@ -132,19 +133,68 @@ def download_audio(
     return DownloadResult(titles=titles, output_dir=output_dir)
 
 
+def _track_dict(path: Path, library_dir: Path) -> dict:
+    stat = path.stat()
+    title, artist, album = read_tags(path)
+    rel = path.relative_to(library_dir.resolve())
+    synced_dir = (library_dir / SYNCED_FOLDER).resolve()
+    return {
+        "path": rel.as_posix(),
+        "name": path.stem,
+        "filename": path.name,
+        "title": title,
+        "artist": artist,
+        "album": album,
+        "synced": path.parent.resolve() == synced_dir,
+        "size_mb": round(stat.st_size / (1024 * 1024), 2),
+        "modified": stat.st_mtime,
+    }
+
+
 def list_tracks(library_dir: Path = DEFAULT_LIBRARY) -> list[dict]:
     if not library_dir.is_dir():
         return []
 
     tracks: list[dict] = []
-    for path in sorted(library_dir.glob("*.mp3"), key=lambda p: p.stat().st_mtime, reverse=True):
-        stat = path.stat()
-        tracks.append(
-            {
-                "name": path.stem,
-                "filename": path.name,
-                "size_mb": round(stat.st_size / (1024 * 1024), 2),
-                "modified": stat.st_mtime,
-            }
-        )
+    for path in library_dir.glob("*.mp3"):
+        tracks.append(_track_dict(path, library_dir))
+
+    synced_dir = library_dir / SYNCED_FOLDER
+    if synced_dir.is_dir():
+        for path in synced_dir.glob("*.mp3"):
+            tracks.append(_track_dict(path, library_dir))
+
+    tracks.sort(key=lambda track: track["modified"], reverse=True)
     return tracks
+
+
+def update_track(
+    relative_path: str,
+    *,
+    new_stem: str,
+    title: str,
+    artist: str,
+    album: str = "",
+    library_dir: Path = DEFAULT_LIBRARY,
+) -> dict:
+    path = resolve_library_mp3(library_dir, relative_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"ファイルが見つかりません: {relative_path}")
+
+    new_stem = validate_filename_stem(new_stem)
+    title = title.strip()
+    if not title:
+        raise MetadataError("曲名を入力してください")
+    artist = artist.strip()
+    album = album.strip()
+
+    new_path = path
+    if new_stem != path.stem:
+        new_path = path.with_name(f"{new_stem}.mp3")
+        if new_path.exists() and new_path != path:
+            raise MetadataError("同じファイル名の曲が既に存在します")
+        path.rename(new_path)
+
+    write_tags(new_path, title, artist, album)
+
+    return _track_dict(new_path, library_dir)
