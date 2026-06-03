@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>music-library</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="container">
+    <header>
+      <h1>music-library</h1>
+      <p class="subtitle">YouTube URL から MP3 を取り込む（ローカル専用）</p>
+    </header>
+
+    <section id="alert" class="alert hidden" role="alert"></section>
+
+    <section class="card">
+      <form id="download-form">
+        <label for="url">YouTube URL</label>
+        <input
+          id="url"
+          name="url"
+          type="url"
+          placeholder="https://www.youtube.com/watch?v=..."
+          required
+          autocomplete="off"
+        />
+
+        <div class="row">
+          <div class="field">
+            <label for="quality">音質 (kbps)</label>
+            <select id="quality" name="quality">
+              <option value="128">128</option>
+              <option value="192" selected>192</option>
+              <option value="256">256</option>
+              <option value="320">320</option>
+            </select>
+          </div>
+          <label class="checkbox">
+            <input id="playlist" name="playlist" type="checkbox">
+            プレイリスト全体
+          </label>
+        </div>
+
+        <label class="checkbox option-row">
+          <input id="trim-silence" name="trim_silence" type="checkbox" checked>
+          先頭・末尾の無音を削除
+        </label>
+
+        <label class="checkbox option-row">
+          <input id="normalize-loudness" name="normalize_loudness" type="checkbox" checked>
+          音量を一定にする
+        </label>
+
+        <button id="submit-btn" type="submit">ダウンロード</button>
+      </form>
+
+      <div id="status" class="status hidden">
+        <div class="spinner" aria-hidden="true"></div>
+        <span id="status-text"></span>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="section-header">
+        <h2>ライブラリ</h2>
+        <button id="refresh-btn" type="button" class="secondary">更新</button>
+      </div>
+      <p id="library-path" class="meta"></p>
+      <ul id="track-list" class="track-list"></ul>
+      <p id="empty-library" class="empty hidden">まだ曲がありません</p>
+    </section>
+  </main>
+
+  <script src="/static/app.js"></script>
+</body>
+</html>

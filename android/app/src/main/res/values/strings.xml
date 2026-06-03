@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Music Library</string>
+    <string name="library_title">ライブラリ</string>
+    <string name="songs_tab">曲</string>
+    <string name="permission_required">端末内の音楽を読み取る権限が必要です</string>
+    <string name="grant_permission">権限を許可</string>
+    <string name="empty_library">端末に音楽がありません\nPC から MP3 を Music フォルダへコピーしてください</string>
+    <string name="now_playing">再生中</string>
+    <string name="unknown_artist">不明なアーティスト</string>
+    <string name="unknown_title">不明な曲</string>
+</resources>
