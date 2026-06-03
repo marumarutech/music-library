@@ -78,22 +78,43 @@ function renderTrackItem(track) {
     <div class="track-info">
       ${renderMetaLine("曲名", track.title)}
       ${renderMetaLine("アーティスト", track.artist)}
+      ${renderMetaLine("アルバム", track.album)}
       <span class="track-filename">${escapeHtml(track.filename)} · ${track.size_mb} MB</span>
     </div>
-    <button type="button" class="secondary track-edit-btn">編集</button>
+    <div class="track-actions"></div>
   `;
-  li.querySelector(".track-edit-btn").addEventListener("click", () => openEditDialog(track));
+
+  const actions = li.querySelector(".track-actions");
+
+  const editBtn = document.createElement("button");
+  editBtn.type = "button";
+  editBtn.className = "secondary track-edit-btn";
+  editBtn.textContent = "編集";
+  editBtn.addEventListener("click", () => openEditDialog(track));
+  actions.appendChild(editBtn);
+
+  if (track.synced) {
+    const restoreBtn = document.createElement("button");
+    restoreBtn.type = "button";
+    restoreBtn.className = "secondary track-restore-btn";
+    restoreBtn.textContent = "ライブラリに戻す";
+    restoreBtn.addEventListener("click", () => restoreTrack(track));
+    actions.appendChild(restoreBtn);
+  }
+
   trackList.appendChild(li);
 }
 
-function renderSection(title, tracks) {
+function renderSection(title, tracks, { hint = "" } = {}) {
   if (tracks.length === 0) {
     return;
   }
 
   const heading = document.createElement("li");
   heading.className = "track-section";
-  heading.textContent = title;
+  heading.innerHTML = hint
+    ? `<span class="track-section-title">${escapeHtml(title)}</span><span class="track-section-hint">${escapeHtml(hint)}</span>`
+    : escapeHtml(title);
   trackList.appendChild(heading);
 
   for (const track of tracks) {
@@ -113,6 +134,26 @@ function openEditDialog(track) {
 
 function closeEditDialog() {
   editDialog.close();
+}
+
+async function restoreTrack(track) {
+  try {
+    const res = await fetch("/api/tracks/move", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: track.path, to_synced: false }),
+    });
+
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      throw new Error(data.detail || "移動に失敗しました");
+    }
+
+    showAlert("ライブラリに戻しました", "success");
+    await loadTracks();
+  } catch (err) {
+    showAlert(err.message || String(err));
+  }
 }
 
 async function saveTrackEdit(event) {
@@ -158,7 +199,9 @@ async function loadTracks() {
   emptyLibrary.classList.toggle("hidden", tracks.length > 0);
 
   renderSection("ライブラリ", tracks.filter((track) => !track.synced));
-  renderSection("済み", tracks.filter((track) => track.synced));
+  renderSection("済み", tracks.filter((track) => track.synced), {
+    hint: "各曲の右に「ライブラリに戻す」",
+  });
 }
 
 async function loadHealth() {

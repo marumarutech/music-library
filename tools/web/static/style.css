@@ -183,6 +183,20 @@ button.secondary {
   text-transform: uppercase;
 }
 
+.track-section-title {
+  display: block;
+}
+
+.track-section-hint {
+  display: block;
+  margin-top: 0.2rem;
+  font-size: 0.72rem;
+  font-weight: 400;
+  letter-spacing: normal;
+  text-transform: none;
+  color: var(--muted);
+}
+
 .track-list li.track-section:not(:first-child) {
   margin-top: 0.5rem;
   padding-top: 1.25rem;
@@ -228,6 +242,25 @@ button.secondary {
 
 .track-edit-btn {
   flex-shrink: 0;
+}
+
+.track-actions {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  flex-shrink: 0;
+}
+
+.track-actions button {
+  margin-top: 0;
+  white-space: nowrap;
+  min-width: 7.5rem;
+}
+
+.track-restore-btn {
+  color: var(--text);
+  border-color: var(--accent);
 }
 
 .status {

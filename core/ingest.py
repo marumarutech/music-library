@@ -198,3 +198,30 @@ def update_track(
     write_tags(new_path, title, artist, album)
 
     return _track_dict(new_path, library_dir)
+
+
+def move_track(
+    relative_path: str,
+    *,
+    to_synced: bool,
+    library_dir: Path = DEFAULT_LIBRARY,
+) -> dict:
+    path = resolve_library_mp3(library_dir, relative_path)
+    if not path.is_file():
+        raise FileNotFoundError(f"ファイルが見つかりません: {relative_path}")
+
+    synced_dir = library_dir / SYNCED_FOLDER
+    synced_dir.mkdir(exist_ok=True)
+    is_synced = path.parent.resolve() == synced_dir.resolve()
+
+    if to_synced and is_synced:
+        raise MetadataError("既に済みフォルダにあります")
+    if not to_synced and not is_synced:
+        raise MetadataError("既にライブラリにあります")
+
+    dest = (synced_dir if to_synced else library_dir) / path.name
+    if dest.exists():
+        raise MetadataError(f"移動先に同じファイル名が既に存在します: {dest.name}")
+
+    path.rename(dest)
+    return _track_dict(dest, library_dir)

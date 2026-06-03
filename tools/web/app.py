@@ -19,11 +19,18 @@ from pydantic import BaseModel, Field
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[2]))
 
-from core.ingest import FFmpegNotFoundError, download_audio, list_tracks, resolve_deno_path, update_track
+from core.ingest import FFmpegNotFoundError, download_audio, list_tracks, move_track, resolve_deno_path, update_track
 from core.metadata import MetadataError
 from core.paths import DEFAULT_LIBRARY
 
 STATIC_DIR = Path(__file__).resolve().parent / "static"
+
+
+class NoCacheStaticFiles(StaticFiles):
+    async def get_response(self, path: str, scope):
+        response = await super().get_response(path, scope)
+        response.headers["Cache-Control"] = "no-cache"
+        return response
 
 
 class JobStatus(str, Enum):
@@ -44,7 +51,7 @@ jobs: dict[str, Job] = {}
 jobs_lock = threading.Lock()
 
 app = FastAPI(title="music-library", docs_url=None, redoc_url=None)
-app.mount("/static", StaticFiles(directory=STATIC_DIR), name="static")
+app.mount("/static", NoCacheStaticFiles(directory=STATIC_DIR), name="static")
 
 
 class DownloadRequest(BaseModel):
@@ -72,6 +79,11 @@ class TrackUpdateRequest(BaseModel):
     title: str = Field(min_length=1)
     artist: str = ""
     album: str = ""
+
+
+class TrackMoveRequest(BaseModel):
+    path: str = Field(min_length=1)
+    to_synced: bool
 
 
 def _set_job_message(job_id: str, message: str) -> None:
@@ -123,7 +135,9 @@ def run_download(
 
 @app.get("/")
 def index() -> FileResponse:
-    return FileResponse(STATIC_DIR / "index.html")
+    response = FileResponse(STATIC_DIR / "index.html")
+    response.headers["Cache-Control"] = "no-cache"
+    return response
 
 
 @app.get("/api/health")
@@ -161,6 +175,22 @@ def patch_track(body: TrackUpdateRequest) -> dict:
             title=body.title.strip(),
             artist=body.artist.strip(),
             album=body.album.strip(),
+            library_dir=DEFAULT_LIBRARY,
+        )
+    except FileNotFoundError as exc:
+        raise HTTPException(status_code=404, detail=str(exc)) from exc
+    except MetadataError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
+
+    return {"track": track}
+
+
+@app.post("/api/tracks/move")
+def post_track_move(body: TrackMoveRequest) -> dict:
+    try:
+        track = move_track(
+            body.path.strip(),
+            to_synced=body.to_synced,
             library_dir=DEFAULT_LIBRARY,
         )
     except FileNotFoundError as exc:
