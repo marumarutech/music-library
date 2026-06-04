@@ -180,7 +180,16 @@ async function saveTrackEdit(event) {
     }
 
     closeEditDialog();
-    showAlert("曲情報を保存しました", "success");
+    const requestedName = editFilename.value.trim();
+    const saved = data.track;
+    if (saved && saved.name !== requestedName) {
+      showAlert(
+        `同名のファイルがあるため「${saved.filename}」に保存しました`,
+        "success"
+      );
+    } else {
+      showAlert("曲情報を保存しました", "success");
+    }
     await loadTracks();
   } catch (err) {
     showAlert(err.message || String(err));

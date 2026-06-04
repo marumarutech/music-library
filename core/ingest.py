@@ -8,6 +8,7 @@ from pathlib import Path
 import yt_dlp
 
 from core.audio import normalize_loudness, trim_silence_edges
+from core.filenames import ensure_unique_stem
 from core.metadata import MetadataError, read_tags, resolve_library_mp3, validate_filename_stem, write_tags
 from core.paths import DEFAULT_LIBRARY, SYNCED_FOLDER
 
@@ -181,7 +182,7 @@ def update_track(
     if not path.is_file():
         raise FileNotFoundError(f"ファイルが見つかりません: {relative_path}")
 
-    new_stem = validate_filename_stem(new_stem)
+    requested_stem = validate_filename_stem(new_stem)
     title = title.strip()
     if not title:
         raise MetadataError("曲名を入力してください")
@@ -189,10 +190,9 @@ def update_track(
     album = album.strip()
 
     new_path = path
-    if new_stem != path.stem:
-        new_path = path.with_name(f"{new_stem}.mp3")
-        if new_path.exists() and new_path != path:
-            raise MetadataError("同じファイル名の曲が既に存在します")
+    if requested_stem != path.stem:
+        unique_stem = ensure_unique_stem(library_dir, requested_stem, exclude=path)
+        new_path = path.with_name(f"{unique_stem}.mp3")
         path.rename(new_path)
 
     write_tags(new_path, title, artist, album)
